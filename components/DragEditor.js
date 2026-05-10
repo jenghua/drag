@@ -2,7 +2,6 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import Draggable from 'react-draggable';
-import html2canvas from 'html2canvas';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
@@ -68,15 +67,72 @@ export default function DragEditor() {
     if (!canvasRef.current) return;
     setIsDownloading(true);
     try {
-      const canvas = await html2canvas(canvasRef.current, { useCORS: true });
+      // 等字體確認載入完成
+      await document.fonts.ready;
+
+      const container = canvasRef.current;
+      const { width, height } = container.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      const offscreen = document.createElement('canvas');
+      offscreen.width = Math.round(width * dpr);
+      offscreen.height = Math.round(height * dpr);
+      const ctx = offscreen.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      // 白底
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      // 背景圖：模擬 background-size:contain + center
+      await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const ir = img.naturalWidth / img.naturalHeight;
+          const cr = width / height;
+          let dw, dh, dx, dy;
+          if (ir > cr) {
+            dw = width; dh = width / ir;
+            dx = 0;    dy = (height - dh) / 2;
+          } else {
+            dh = height; dw = height * ir;
+            dy = 0;     dx = (width - dw) / 2;
+          }
+          ctx.drawImage(img, dx, dy, dw, dh);
+          resolve();
+        };
+        img.onerror = resolve;
+        img.src = `${BASE}/drag.png`;
+      });
+
+      // 文字：與畫面位置和旋轉同步
+      if (text) {
+        ctx.font = `${fontSize}px "${fontFamily}"`;
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#000000';
+
+        const tw = ctx.measureText(text).width;
+        const th = fontSize;
+        // react-draggable position 是元素左上角的偏移量，旋轉以元素中心為軸
+        const cx = position.x + tw / 2;
+        const cy = position.y + th / 2;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.fillText(text, -tw / 2, -th / 2);
+        ctx.restore();
+      }
+
       const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
+      link.href = offscreen.toDataURL('image/png');
       link.download = 'dawoo-design.png';
       link.click();
     } finally {
       setIsDownloading(false);
     }
-  }, []);
+  }, [text, position, rotation, fontSize, fontFamily]);
 
   return (
     <div className="min-h-screen flex flex-col">
