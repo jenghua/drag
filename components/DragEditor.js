@@ -4,6 +4,8 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import Draggable from 'react-draggable';
 import html2canvas from 'html2canvas';
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 const FONTS = [
   { value: 'trajan', label: '英文正體字 (Trajan)' },
   { value: 'amazon', label: '英文草寫一 (Amazon)' },
@@ -66,7 +68,7 @@ export default function DragEditor() {
       <header className="py-8 px-4">
         <div className="max-w-5xl mx-auto flex justify-center">
           <img
-            src="/dawoodesign.png"
+            src={`${BASE}/dawoodesign.png`}
             alt="DaWood Design"
             className="max-w-xs w-full"
           />
@@ -82,7 +84,7 @@ export default function DragEditor() {
             className="relative w-full rounded-2xl overflow-hidden bg-white shadow-sm border border-stone-200"
             style={{
               minHeight: '60dvh',
-              backgroundImage: 'url(/drag.png)',
+              backgroundImage: `url(${BASE}/drag.png)`,
               backgroundSize: 'contain',
               backgroundRepeat: 'no-repeat',
               backgroundPosition: 'center',
