@@ -22,6 +22,7 @@ export default function DragEditor() {
   const [rotation, setRotation] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDownloading, setIsDownloading] = useState(false);
+  const [fontLoading, setFontLoading] = useState(false);
 
   const draggableRef = useRef(null);
   const canvasRef = useRef(null);
@@ -31,6 +32,8 @@ export default function DragEditor() {
       const { width, height } = canvasRef.current.getBoundingClientRect();
       setPosition({ x: width / 2, y: height / 2 });
     }
+    // 背景預載所有字體，中文大字體（~35MB）需時較長但不阻塞 UI
+    FONTS.forEach(({ value }) => document.fonts.load(`16px "${value}"`));
   }, []);
 
   const handleApply = useCallback(() => {
@@ -43,6 +46,19 @@ export default function DragEditor() {
     },
     [inputValue]
   );
+
+  const handleFontChange = useCallback(async (e) => {
+    const newFont = e.target.value;
+    setFontFamily(newFont);
+    if (!document.fonts.check(`16px "${newFont}"`)) {
+      setFontLoading(true);
+      try {
+        await document.fonts.load(`16px "${newFont}"`);
+      } finally {
+        setFontLoading(false);
+      }
+    }
+  }, []);
 
   const handleDrag = useCallback((_, data) => {
     setPosition({ x: data.x, y: data.y });
@@ -139,7 +155,7 @@ export default function DragEditor() {
               </label>
               <select
                 value={fontFamily}
-                onChange={(e) => setFontFamily(e.target.value)}
+                onChange={handleFontChange}
                 className="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 cursor-pointer"
               >
                 {FONTS.map((font) => (
@@ -150,10 +166,12 @@ export default function DragEditor() {
               </select>
               {text && (
                 <div
-                  className="mt-3 px-4 py-3 bg-stone-50 rounded-xl text-center overflow-hidden border border-stone-100 text-stone-700"
-                  style={{ fontFamily, fontSize: '1.5rem' }}
+                  className="mt-3 px-4 py-3 bg-stone-50 rounded-xl text-center overflow-hidden border border-stone-100 min-h-[3rem] flex items-center justify-center"
+                  style={fontLoading ? {} : { fontFamily, fontSize: '1.5rem', color: '#44403c' }}
                 >
-                  {text}
+                  {fontLoading
+                    ? <span className="text-xs text-stone-400 animate-pulse">字體載入中…</span>
+                    : text}
                 </div>
               )}
             </div>

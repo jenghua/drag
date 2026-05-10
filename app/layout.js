@@ -40,6 +40,10 @@ export default function RootLayout({ children }) {
     <html lang="zh-TW">
       <head>
         <style dangerouslySetInnerHTML={{ __html: fontFaces }} />
+        {/* 英文字體檔案小，提前下載消除切換延遲 */}
+        <link rel="preload" href={`${BASE}/trajan.ttf`} as="font" type="font/truetype" crossOrigin="anonymous" />
+        <link rel="preload" href={`${BASE}/amazon.ttf`} as="font" type="font/truetype" crossOrigin="anonymous" />
+        <link rel="preload" href={`${BASE}/Sacramento-Regular.ttf`} as="font" type="font/truetype" crossOrigin="anonymous" />
       </head>
       <body className="bg-stone-50 min-h-screen">{children}</body>
     </html>
