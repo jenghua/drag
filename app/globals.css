@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'trajan';
+  src: url('/trajan.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'amazon';
+  src: url('/amazon.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'sacramento';
+  src: url('/Sacramento-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'elegant';
+  src: url('/elegant.otf') format('opentype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'w3';
+  src: url('/DFT_TX3.ttf') format('truetype');
+  font-display: swap;
+}
