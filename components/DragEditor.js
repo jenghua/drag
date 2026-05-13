@@ -165,17 +165,15 @@ export default function DragEditor() {
           </button>
         </div>
 
-        {/* 字體預覽 */}
-        {text && (
-          <div
-            className="h-9 px-4 flex items-center justify-center overflow-hidden rounded-xl bg-stone-50 border border-stone-100"
-            style={fontLoading ? {} : { fontFamily, fontSize: '1.25rem', color: '#292524' }}
-          >
-            {fontLoading
-              ? <span className="text-xs text-stone-400 animate-pulse">字體載入中…</span>
-              : text}
-          </div>
-        )}
+        {/* 字體預覽：輸入即時顯示，不需先套用 */}
+        <div
+          className="h-9 px-4 flex items-center justify-center overflow-hidden rounded-xl bg-stone-50 border border-stone-100"
+          style={fontLoading ? {} : { fontFamily, fontSize: '1.25rem', color: '#292524' }}
+        >
+          {fontLoading
+            ? <span className="text-xs text-stone-400 animate-pulse">字體載入中…</span>
+            : <span className="text-stone-400 truncate">{inputValue || '預覽文字…'}</span>}
+        </div>
 
         {/*
           手機 (grid-cols-2)：
