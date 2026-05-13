@@ -6,11 +6,11 @@ import Draggable from 'react-draggable';
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 const FONTS = [
-  { value: 'trajan',    label: '英文正體字 (Trajan)' },
-  { value: 'amazon',    label: '英文草寫一 (Amazon)' },
-  { value: 'sacramento',label: '英文草寫二 (Sacramento)' },
-  { value: 'elegant',   label: '中文秀風體' },
-  { value: 'w3',        label: '中文鐵線體' },
+  { value: 'trajan',     label: '英文正體字 (Trajan)' },
+  { value: 'amazon',     label: '英文草寫一 (Amazon)' },
+  { value: 'sacramento', label: '英文草寫二 (Sacramento)' },
+  { value: 'elegant',    label: '中文秀風體' },
+  { value: 'w3',         label: '中文鐵線體' },
 ];
 
 export default function DragEditor() {
@@ -47,11 +47,8 @@ export default function DragEditor() {
     setFontFamily(newFont);
     if (!document.fonts.check(`16px "${newFont}"`)) {
       setFontLoading(true);
-      try {
-        await document.fonts.load(`16px "${newFont}"`);
-      } finally {
-        setFontLoading(false);
-      }
+      try { await document.fonts.load(`16px "${newFont}"`); }
+      finally { setFontLoading(false); }
     }
   }, []);
 
@@ -64,20 +61,15 @@ export default function DragEditor() {
     setIsDownloading(true);
     try {
       await document.fonts.ready;
-
-      const container = canvasRef.current;
-      const { width, height } = container.getBoundingClientRect();
+      const { width, height } = canvasRef.current.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-
       const offscreen = document.createElement('canvas');
-      offscreen.width = Math.round(width * dpr);
+      offscreen.width  = Math.round(width * dpr);
       offscreen.height = Math.round(height * dpr);
       const ctx = offscreen.getContext('2d');
       ctx.scale(dpr, dpr);
-
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
-
       await new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -85,35 +77,26 @@ export default function DragEditor() {
           const ir = img.naturalWidth / img.naturalHeight;
           const cr = width / height;
           let dw, dh, dx, dy;
-          if (ir > cr) {
-            dw = width; dh = width / ir;
-            dx = 0;    dy = (height - dh) / 2;
-          } else {
-            dh = height; dw = height * ir;
-            dy = 0;     dx = (width - dw) / 2;
-          }
+          if (ir > cr) { dw = width;  dh = width / ir;  dx = 0; dy = (height - dh) / 2; }
+          else         { dh = height; dw = height * ir;  dy = 0; dx = (width - dw) / 2;  }
           ctx.drawImage(img, dx, dy, dw, dh);
           resolve();
         };
         img.onerror = resolve;
         img.src = `${BASE}/drag.png`;
       });
-
       if (text) {
         ctx.font = `${fontSize}px "${fontFamily}"`;
         ctx.textBaseline = 'top';
         ctx.fillStyle = '#000000';
         const tw = ctx.measureText(text).width;
         const th = fontSize;
-        const cx = position.x + tw / 2;
-        const cy = position.y + th / 2;
         ctx.save();
-        ctx.translate(cx, cy);
+        ctx.translate(position.x + tw / 2, position.y + th / 2);
         ctx.rotate((rotation * Math.PI) / 180);
         ctx.fillText(text, -tw / 2, -th / 2);
         ctx.restore();
       }
-
       const link = document.createElement('a');
       link.href = offscreen.toDataURL('image/png');
       link.download = 'dawoo-design.png';
@@ -124,26 +107,19 @@ export default function DragEditor() {
   }, [text, position, rotation, fontSize, fontFamily]);
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-stone-50">
 
-      {/* Header */}
-      <header className="bg-white border-b border-stone-100 py-3 px-6">
-        <img
-          src={`${BASE}/dawoodesign.png`}
-          alt="DaWood Design"
-          className="h-9 w-auto mx-auto"
-        />
+      {/* ── Header ── */}
+      <header className="shrink-0 h-12 bg-white border-b border-stone-100 flex items-center justify-center px-4">
+        <img src={`${BASE}/dawoodesign.png`} alt="DaWood Design" className="h-7 w-auto" />
       </header>
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col gap-4 p-4 sm:p-6 max-w-4xl mx-auto w-full">
-
-        {/* Canvas */}
+      {/* ── Canvas：flex-1 + min-h-0 填滿剩餘高度 ── */}
+      <div className="flex-1 min-h-0 p-3">
         <div
           ref={canvasRef}
-          className="relative w-full rounded-2xl overflow-hidden bg-white shadow-md"
+          className="relative w-full h-full rounded-2xl overflow-hidden bg-white shadow-md"
           style={{
-            aspectRatio: '4/3',
             backgroundImage: `url(${BASE}/drag.png)`,
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
@@ -166,111 +142,93 @@ export default function DragEditor() {
             </div>
           </Draggable>
         </div>
+      </div>
 
-        {/* Controls */}
-        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-5 space-y-4">
+      {/* ── Controls：shrink-0 固定在底部 ── */}
+      <div className="shrink-0 bg-white border-t border-stone-100 px-4 pt-3 pb-4 space-y-3">
 
-          {/* Text input */}
-          <div className="flex gap-2">
+        {/* 文字輸入 */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="輸入文字，按 Enter 或套用…"
+            className="flex-1 h-10 px-4 border border-stone-200 rounded-xl text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300"
+          />
+          <button
+            onClick={handleApply}
+            className="shrink-0 h-10 px-5 bg-stone-900 text-white text-sm rounded-xl hover:bg-stone-700 active:bg-stone-800 transition-colors font-medium"
+          >
+            套用
+          </button>
+        </div>
+
+        {/*
+          手機 (grid-cols-2)：
+            字體   → col-span-2（獨佔一行）
+            大小   → col 1
+            旋轉   → col 2
+            下載   → col-span-2（獨佔一行）
+          桌面 sm+ (grid-cols-[11rem_1fr_1fr_auto])：
+            字體 | 大小 | 旋轉 | 下載  ← 同一行
+        */}
+        <div className="grid grid-cols-2 sm:grid-cols-[11rem_1fr_1fr_auto] gap-x-3 gap-y-3 items-end">
+
+          {/* 字體 */}
+          <div className="col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-stone-500 uppercase tracking-widest">字體</span>
+              {fontLoading && <span className="text-xs text-stone-400 animate-pulse">載入中…</span>}
+            </div>
+            <select
+              value={fontFamily}
+              onChange={handleFontChange}
+              className="w-full h-10 px-3 border border-stone-200 rounded-xl text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 cursor-pointer"
+            >
+              {FONTS.map((f) => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 大小 */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-semibold text-stone-500 uppercase tracking-widest">大小</span>
+              <span className="text-xs font-medium text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded-full">{fontSize}px</span>
+            </div>
             <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="輸入文字，按 Enter 或套用…"
-              className="flex-1 px-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              type="range" min="12" max="36" value={fontSize}
+              onChange={(e) => setFontSize(Number(e.target.value))}
+              className="w-full accent-stone-900 cursor-pointer"
             />
-            <button
-              onClick={handleApply}
-              className="px-5 py-2.5 bg-stone-900 text-white text-sm rounded-xl hover:bg-stone-700 active:bg-stone-800 transition-colors font-medium shrink-0"
-            >
-              套用
-            </button>
           </div>
 
-          {/* Font preview */}
-          {text && (
-            <div
-              className="px-4 py-2.5 bg-stone-50 rounded-xl border border-stone-100 text-center overflow-hidden min-h-[2.75rem] flex items-center justify-center"
-              style={fontLoading ? {} : { fontFamily, fontSize: '1.4rem', color: '#292524' }}
-            >
-              {fontLoading
-                ? <span className="text-xs text-stone-400 animate-pulse">字體載入中…</span>
-                : text}
+          {/* 旋轉 */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-semibold text-stone-500 uppercase tracking-widest">旋轉</span>
+              <span className="text-xs font-medium text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded-full">{rotation}°</span>
             </div>
-          )}
-
-          {/* 3-col controls: font | size | rotation */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-            {/* Font */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-stone-500 uppercase tracking-widest">字體</label>
-              <select
-                value={fontFamily}
-                onChange={handleFontChange}
-                className="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 cursor-pointer"
-              >
-                {FONTS.map((f) => (
-                  <option key={f.value} value={f.value}>{f.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Size */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-semibold text-stone-500 uppercase tracking-widest">文字大小</label>
-                <span className="text-xs font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">{fontSize}px</span>
-              </div>
-              <input
-                type="range"
-                min="12"
-                max="36"
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-full accent-stone-900 cursor-pointer mt-1"
-              />
-              <div className="flex justify-between text-xs text-stone-400">
-                <span>12</span><span>36</span>
-              </div>
-            </div>
-
-            {/* Rotation */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-semibold text-stone-500 uppercase tracking-widest">旋轉</label>
-                <span className="text-xs font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">{rotation}°</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="360"
-                value={rotation}
-                onChange={(e) => setRotation(Number(e.target.value))}
-                className="w-full accent-stone-900 cursor-pointer mt-1"
-              />
-              <div className="flex justify-between text-xs text-stone-400">
-                <span>0°</span><span>360°</span>
-              </div>
-            </div>
+            <input
+              type="range" min="0" max="360" value={rotation}
+              onChange={(e) => setRotation(Number(e.target.value))}
+              className="w-full accent-stone-900 cursor-pointer"
+            />
           </div>
 
-          {/* Download */}
+          {/* 下載 */}
           <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className="w-full py-3 bg-stone-900 text-white rounded-xl hover:bg-stone-700 active:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm tracking-wide"
+            className="col-span-2 sm:col-span-1 h-10 px-5 bg-stone-900 text-white text-sm rounded-xl hover:bg-stone-700 active:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isDownloading ? '處理中…' : '↓ 下載圖片'}
+            {isDownloading ? '處理中…' : '↓ 下載'}
           </button>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="py-4 text-center text-xs text-stone-400">
-        &copy; {new Date().getFullYear()} DaWood Design
-      </footer>
     </div>
   );
 }
