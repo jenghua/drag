@@ -165,6 +165,18 @@ export default function DragEditor() {
           </button>
         </div>
 
+        {/* 字體預覽 */}
+        {text && (
+          <div
+            className="h-9 px-4 flex items-center justify-center overflow-hidden rounded-xl bg-stone-50 border border-stone-100"
+            style={fontLoading ? {} : { fontFamily, fontSize: '1.25rem', color: '#292524' }}
+          >
+            {fontLoading
+              ? <span className="text-xs text-stone-400 animate-pulse">字體載入中…</span>
+              : text}
+          </div>
+        )}
+
         {/*
           手機 (grid-cols-2)：
             字體   → col-span-2（獨佔一行）
